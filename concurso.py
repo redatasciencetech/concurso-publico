@@ -1,0 +1,516 @@
+# Re-generating a fully functional, production-ready, beautiful HTML app that fixes the text cut-off on mobile 
+# seen in 1000717312.png and populates ALL topics from the Palhoça Técnico Legislativo edital.
+
+app_code = """<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Dashboard de Estudos - Palhoça</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            margin-top: 10px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, #0f172a 100%);
+            color: white;
+            padding: 24px 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.2);
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            color: #93c5fd;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .countdown-badge {
+            background-color: rgba(255, 255, 255, 0.15);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .metric-card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .progress-track {
+            background-color: #f1f5f9;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+        }
+
+        .section-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 24px 0 12px 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Collapsible Subject Block using HTML5 Details */
+        details {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+
+        details[open] {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        summary {
+            padding: 14px 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            list-style: none;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: "→";
+            font-weight: bold;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        details[open] summary::after {
+            transform: rotate(90deg);
+            color: var(--primary-light);
+        }
+
+        .subject-progress-mini {
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: var(--text-main);
+            margin-left: auto;
+            margin-right: 12px;
+            font-weight: 700;
+        }
+
+        .topics-list {
+            padding: 4px 16px 14px 16px;
+            border-top: 1px solid #f1f5f9;
+            background-color: #fafafa;
+        }
+
+        .topic-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 11px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .topic-row:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            display: grid;
+            place-content: center;
+            background-color: #fff;
+            transition: all 0.15s ease;
+        }
+
+        input[type="checkbox"]:checked {
+            border-color: var(--success);
+            background-color: var(--success);
+        }
+
+        input[type="checkbox"]:checked::before {
+            content: "";
+            width: 10px;
+            height: 6px;
+            border-left: 2px solid white;
+            border-bottom: 2px solid white;
+            transform: rotate(-45deg) translate(1px, -1px);
+        }
+
+        label {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #334155;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 500;
+        }
+
+        input[type="checkbox"]:checked + label {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .reset-btn {
+            display: block;
+            width: 100%;
+            background: none;
+            border: 1px dashed var(--text-muted);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 40px;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Dashboard de Estudos</h1>
+        <p>Câmara de Palhoça • Técnico Legislativo</p>
+        <div class="countdown-badge" id="countdown-banner">Carregando cronômetro...</div>
+    </header>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>Gerais</h3>
+            <div class="metric-value" id="val-gerais">0%</div>
+            <div class="progress-track"><div class="progress-fill" id="fill-gerais"></div></div>
+        </div>
+        <div class="metric-card">
+            <h3>Específicos</h3>
+            <div class="metric-value" id="val-especificas">0%</div>
+            <div class="progress-track"><div class="progress-fill" id="fill-especificas"></div></div>
+        </div>
+    </div>
+
+    <!-- ================= CONHECIMENTOS GERAIS ================= -->
+    <div class="section-header">
+        <span>Conhecimentos Gerais</span>
+    </div>
+
+    <details id="subject-port">
+        <summary>Língua Portuguesa <span class="subject-progress-mini" id="mini-port">0/16</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="g_pt_1" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_1">Leitura, interpretação e relação entre ideias de textos</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_2" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_2">Fato e opinião, intencionalidade discursiva</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_3" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_3">Implícitos, subentendidos e efeitos de sentido (Fiorin/Savioli)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_4" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_4">Ideias principais/secundárias e argumentação (Orlandi/Koch)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_5" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_5">Situação comunicativa e variações linguísticas</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_6" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_6">Gêneros, tipos textuais e intertextualidade (Marcuschi)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_7" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_7">Coesão e coerência textuais (Ingedore Koch)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_8" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_8">Léxico: significação, sinônimos, antônimos, homônimos</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_9" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_9">Ortografia, hífen e acentuação gráfica (Acordo Ortográfico)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_10" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_10">Figuras de linguagem (Bechara, Cegalla, Cunha)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_11" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_11">Fonologia: fonemas, grafias, vogais e consoantes</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_12" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_12">Morfologia: classes de palavras, flexões e vozes verbais</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_13" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_13">Sintaxe: funções sintáticas e período simples/composto</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_14" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_14">Sintaxe de regência nominal/verbal e uso da crase</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_15" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_15">Sintaxe de concordância verbal e nominal</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_pt_16" class="chk-gerais" onchange="updateProgress()"><label for="g_pt_16">Pontuação: regras e implicações de sentido</label></div>
+        </div>
+    </details>
+
+    <details id="subject-mat">
+        <summary>Matemática e Raciocínio Lógico <span class="subject-progress-mini" id="mini-mat">0/14</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="g_mat_1" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_1">Teoria dos conjuntos e conjuntos numéricos reais</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_2" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_2">Operações fundamentais, primos, MMC e MDC</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_3" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_3">Razões, proporções e grandezas proporcionais</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_4" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_4">Regra de três simples e composta</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_5" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_5">Sistema de medidas e Sistema Monetário Brasileiro</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_6" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_6">Cálculo algébrico: monômios e polinômios</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_7" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_7">Funções e equações de 1º e 2º grau; sistemas lineares</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_8" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_8">Progressão Aritmética (PA) e Progressão Geométrica (PG)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_9" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_9">Análise combinatória e probabilidade básica</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_10" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_10">Matemática financeira: porcentagem e juro simples</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_11" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_11">Estatística: média aritmética simples e ponderada</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_12" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_12">Estrutura lógica de relações e dedução de informações</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_13" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_13">Sequências lógicas, padrões e diagramas lógicos</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_mat_14" class="chk-mat chk-gerais" onchange="updateProgress()"><label for="g_mat_14">Proposições, conectivos e operações lógicas básicas</label></div>
+        </div>
+    </details>
+
+    <details id="subject-info">
+        <summary>Informática e Inteligência Artificial <span class="subject-progress-mini" id="mini-info">0/7</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="g_inf_1" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_1">Windows 10 e 11 Pro: Gerenciamento de arquivos e pastas</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_inf_2" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_2">Word e Excel Microsoft Office 365: Recursos básicos</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_inf_3" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_3">Navegadores de Internet (Chrome, Firefox, Edge)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_inf_4" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_4">Correio Eletrônico: Microsoft Outlook e Gmail</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_inf_5" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_5">Segurança digital: Malwares, phishing e senhas</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_inf_6" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_6">IA Generativa, assistentes digitais e produtividade</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_inf_7" class="chk-info chk-gerais" onchange="updateProgress()"><label for="g_inf_7">Ética em IA, privacidade e detecção de deepfakes</label></div>
+        </div>
+    </details>
+
+    <details id="subject-leg">
+        <summary>Legislação Municipal e Penal <span class="subject-progress-mini" id="mini-leg">0/5</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="g_leg_1" class="chk-leg chk-gerais" onchange="updateProgress()"><label for="g_leg_1">Lei Orgânica do Município de Palhoça</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_leg_2" class="chk-leg chk-gerais" onchange="updateProgress()"><label for="g_leg_2">Estatuto dos Servidores Municipais (LC nº 96/2010)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_leg_3" class="chk-leg chk-gerais" onchange="updateProgress()"><label for="g_leg_3">Regimento Interno da Câmara Municipal de Palhoça</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_leg_4" class="chk-leg chk-gerais" onchange="updateProgress()"><label for="g_leg_4">Crimes contra a Administração Pública e Finanças (CP)</label></div>
+            <div class="topic-row"><input type="checkbox" id="g_leg_5" class="chk-leg chk-gerais" onchange="updateProgress()"><label for="g_leg_5">LINDB - Lei de Introdução às Normas do Direito Brasileiro</label></div>
+        </div>
+    </details>
+
+    <!-- ================= CONHECIMENTOS ESPECÍFICOS ================= -->
+    <div class="section-header">
+        <span>Conhecimentos Específicos</span>
+    </div>
+
+    <details id="subject-const">
+        <summary>Direito Constitucional e Administrativo <span class="subject-progress-mini" id="mini-const">0/7</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="e_adm_1" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_1">CF/88: Princípios, Direitos Fundamentais e Organização</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_adm_2" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_2">Poder Legislativo Municipal: Estrutura e competências</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_adm_3" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_3">Processo Legislativo: Iniciativa, votação, sanção e veto</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_adm_4" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_4">Princípios e Atos Administrativos: Requisitos e atributos</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_adm_5" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_5">Agentes Públicos: Provimento, vacância e responsabilidades</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_adm_6" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_6">Lei de Improbidade Administrativa (Lei nº 8.429/1992)</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_adm_7" class="chk-especificas" onchange="updateProgress()"><label for="e_adm_7">Lei de Acesso à Informação (LAI) e Noções de LGPD</label></div>
+        </div>
+    </details>
+
+    <details id="subject-licit">
+        <summary>Licitações e Contratos (Nova Lei) <span class="subject-progress-mini" id="mini-licit">0/4</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="e_lic_1" class="chk-especificas" onchange="updateProgress()"><label for="e_lic_1">Lei nº 14.133/2021: Princípios e fase de planejamento</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_lic_2" class="chk-especificas" onchange="updateProgress()"><label for="e_lic_2">Modalidades de licitação e critérios de julgamento</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_lic_3" class="chk-especificas" onchange="updateProgress()"><label for="e_lic_3">Contratação direta: Dispensa e inexigibilidade</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_lic_4" class="chk-especificas" onchange="updateProgress()"><label for="e_lic_4">Gestão, fiscalização e acompanhamento contratual</label></div>
+        </div>
+    </details>
+
+    <details id="subject-gestao">
+        <summary>Administração, Materiais e Orçamento <span class="subject-progress-mini" id="mini-gestao">0/6</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="e_ges_1" class="chk-especificas" onchange="updateProgress()"><label for="e_ges_1">Funções administrativas e Gestão por Processos</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_ges_2" class="chk-especificas" onchange="updateProgress()"><label for="e_ges_2">Orçamento Público: Princípios, Ciclo Orçamentário e LRF</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_ges_3" class="chk-especificas" onchange="updateProgress()"><label for="e_ges_3">Instrumentos orçamentários: PPA, LDO e LOA</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_ges_4" class="chk-especificas" onchange="updateProgress()"><label for="e_ges_4">Estágios da receita e despesa: Empenho, liquidação e pagamento</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_ges_5" class="chk-especificas" onchange="updateProgress()"><label for="e_ges_5">Administração de materiais, estoques e almoxarifado</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_ges_6" class="chk-especificas" onchange="updateProgress()"><label for="e_ges_6">Bens Patrimoniais: Tombamento, classificação e baixa</label></div>
+        </div>
+    </details>
+
+    <details id="subject-rotinas">
+        <summary>Rotinas Legislativas e Ouvidoria <span class="subject-progress-mini" id="mini-rotinas">0/6</span></summary>
+        <div class="topics-list">
+            <div class="topic-row"><input type="checkbox" id="e_rot_1" class="chk-especificas" onchange="updateProgress()"><label for="e_rot_1">Atos e documentos: Redação Oficial (Manual da Presidência)</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_rot_2" class="chk-especificas" onchange="updateProgress()"><label for="e_rot_2">Gestão Documental: Protocolo, arquivos físicos e digitais</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_rot_3" class="chk-especificas" onchange="updateProgress()"><label for="e_rot_3">Técnicas secretariais: Organização de reuniões e atas</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_rot_4" class="chk-especificas" onchange="updateProgress()"><label for="e_rot_4">Processo Legislativo Municipal: Proposições e votações</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_rot_5" class="chk-especificas" onchange="updateProgress()"><label for="e_rot_5">Ouvidoria Pública: Conceito, funções e manifestações</label></div>
+            <div class="topic-row"><input type="checkbox" id="e_rot_6" class="chk-especificas" onchange="updateProgress()"><label for="e_rot_6">Lei nº 13.460/2017: Código de Defesa do Usuário do Serviço Público</label></div>
+        </div>
+    </details>
+
+    <button class="reset-btn" onclick="resetApp()">Limpar Todo o Progresso</button>
+</div>
+
+<script>
+    function updateCountdown() {
+        const examDate = new Date("2026-08-30T00:00:00");
+        const today = new Date();
+        const timeDiff = examDate - today;
+        const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        
+        const banner = document.getElementById("countdown-banner");
+        if (daysLeft > 0) {
+            banner.innerText = `Faltam ${daysLeft} dias para a prova!`;
+        } else if (daysLeft === 0) {
+            banner.innerText = "É HOJE! Boa prova!";
+        } else {
+            banner.innerText = "A prova já foi realizada.";
+        }
+    }
+
+    function updateProgress() {
+        // Total Geral Metrics
+        const gerais = document.querySelectorAll('.chk-gerais');
+        const geraisChecked = document.querySelectorAll('.chk-gerais:checked');
+        const pctGerais = gerais.length ? Math.round((geraisChecked.length / gerais.length) * 100) : 0;
+        document.getElementById('val-gerais').innerText = pctGerais + '%';
+        document.getElementById('fill-gerais').style.width = pctGerais + '%';
+
+        const especificas = document.querySelectorAll('.chk-especificas');
+        const especificasChecked = document.querySelectorAll('.chk-especificas:checked');
+        const pctEspecificas = especificas.length ? Math.round((especificasChecked.length / especificas.length) * 100) : 0;
+        document.getElementById('val-especificas').innerText = pctEspecificas + '%';
+        document.getElementById('fill-especificas').style.width = pctEspecificas + '%';
+
+        // Subject Specific Counters (Mini badges)
+        updateMiniBadge('subject-port', 'mini-port');
+        updateMiniBadge('subject-mat', 'mini-mat');
+        updateMiniBadge('subject-info', 'mini-info');
+        updateMiniBadge('subject-leg', 'mini-leg');
+        updateMiniBadge('subject-const', 'mini-const');
+        updateMiniBadge('subject-licit', 'mini-licit');
+        updateMiniBadge('subject-gestao', 'mini-gestao');
+        updateMiniBadge('subject-rotinas', 'mini-rotinas');
+
+        // Save state
+        const state = {};
+        document.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+            state[chk.id] = chk.checked;
+        });
+        localStorage.setItem('dashboard_palhoca_v2', JSON.stringify(state));
+    }
+
+    function updateMiniBadge(parentId, badgeId) {
+        const parent = document.getElementById(parentId);
+        const total = parent.querySelectorAll('input[type="checkbox"]').length;
+        const checked = parent.querySelectorAll('input[type="checkbox"]:checked').length;
+        document.getElementById(badgeId).innerText = `${checked}/${total}`;
+    }
+
+    function resetApp() {
+        if (confirm("Tem certeza que deseja apagar todo o seu progresso salvo?")) {
+            document.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
+            localStorage.removeItem('dashboard_palhoca_v2');
+            updateProgress();
+        }
+    }
+
+    window.onload = function() {
+        const saved = localStorage.getItem('dashboard_palhoca_v2');
+        if (saved) {
+            const state = JSON.parse(saved);
+            Object.keys(state).forEach(id => {
+                const chk = document.getElementById(id);
+                if (chk) chk.checked = state[id];
+            });
+        }
+        updateCountdown();
+        updateProgress();
+    };
+</script>
+
+</body>
+</html>
+"""
+
+with open("dashboard_estudos_palhoca_completo.html", "w", encoding="utf-8") as f:
+    f.write(app_code)
+
+print("App code generated successfully.")
