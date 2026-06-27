@@ -132,7 +132,6 @@
             justify-content: space-between;
         }
 
-        /* Collapsible Subject Block using HTML5 Details */
         details {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
@@ -204,13 +203,6 @@
             border-bottom: none;
         }
 
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            height: 20px;
-            margin-right: 12px;
-        }
-
         input[type="checkbox"] {
             appearance: none;
             -webkit-appearance: none;
@@ -224,6 +216,9 @@
             place-content: center;
             background-color: #fff;
             transition: all 0.15s ease;
+            margin-right: 12px;
+            margin-top: 1px;
+            flex-shrink: 0;
         }
 
         input[type="checkbox"]:checked {
@@ -266,7 +261,7 @@
             font-size: 0.9rem;
             font-weight: 600;
             margin-top: 30px;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
             transition: all 0.2s ease;
         }
 
@@ -274,6 +269,18 @@
             background-color: #fee2e2;
             border-color: #ef4444;
             color: #b91c1c;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 15px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
         }
     </style>
 </head>
@@ -423,6 +430,8 @@
     </details>
 
     <button class="reset-btn" onclick="resetApp()">Limpar Todo o Progresso</button>
+
+    <footer>Desenvolvido por Rogério Estumano | Data Science Tech © 2026</footer>
 </div>
 
 <script>
@@ -443,7 +452,6 @@
     }
 
     function updateProgress() {
-        // Total Geral Metrics
         const gerais = document.querySelectorAll('.chk-gerais');
         const geraisChecked = document.querySelectorAll('.chk-gerais:checked');
         const pctGerais = gerais.length ? Math.round((geraisChecked.length / gerais.length) * 100) : 0;
@@ -456,7 +464,6 @@
         document.getElementById('val-especificas').innerText = pctEspecificas + '%';
         document.getElementById('fill-especificas').style.width = pctEspecificas + '%';
 
-        // Subject Specific Counters (Mini badges)
         updateMiniBadge('subject-port', 'mini-port');
         updateMiniBadge('subject-mat', 'mini-mat');
         updateMiniBadge('subject-info', 'mini-info');
@@ -466,12 +473,11 @@
         updateMiniBadge('subject-gestao', 'mini-gestao');
         updateMiniBadge('subject-rotinas', 'mini-rotinas');
 
-        // Save state
         const state = {};
         document.querySelectorAll('input[type="checkbox"]').forEach(chk => {
             state[chk.id] = chk.checked;
         });
-        localStorage.setItem('dashboard_palhoca_v2', JSON.stringify(state));
+        localStorage.setItem('dashboard_palhoca_v3', JSON.stringify(state));
     }
 
     function updateMiniBadge(parentId, badgeId) {
@@ -484,13 +490,13 @@
     function resetApp() {
         if (confirm("Tem certeza que deseja apagar todo o seu progresso salvo?")) {
             document.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
-            localStorage.removeItem('dashboard_palhoca_v2');
+            localStorage.removeItem('dashboard_palhoca_v3');
             updateProgress();
         }
     }
 
     window.onload = function() {
-        const saved = localStorage.getItem('dashboard_palhoca_v2');
+        const saved = localStorage.getItem('dashboard_palhoca_v3');
         if (saved) {
             const state = JSON.parse(saved);
             Object.keys(state).forEach(id => {
